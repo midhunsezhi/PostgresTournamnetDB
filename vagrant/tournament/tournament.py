@@ -16,7 +16,7 @@ def deleteMatches():
     """Remove all the match records from the database."""
     DB = connect()
     c = DB.cursor()
-    c.excecute("DELETE TABLE matches")
+    c.execute("DELETE FROM matches")
     DB.commit()
     DB.close()
 
@@ -25,7 +25,7 @@ def deletePlayers():
     """Remove all the player records from the database."""
     DB = connect()
     c = DB.cursor()
-    c.excecute("DELETE TABLE players")
+    c.execute("DELETE FROM players")
     DB.commit()
     DB.close()
 
@@ -33,9 +33,8 @@ def countPlayers():
     """Returns the number of players currently registered."""
     DB = connect()
     c = DB.cursor()
-    c.excecute("SELECT COUNT(*) FROM players")
+    c.execute("SELECT COUNT(*) FROM players")
     count = c.fetchone()[0]
-    print count
     DB.close()
     return count
 
@@ -51,7 +50,7 @@ def registerPlayer(name):
     DB = connect()
     c = DB.cursor()
     name = bleach.clean(name)
-    c.excecute("INSERT INTO players (name) VALUES (%s)", (name,))
+    c.execute("INSERT INTO players (name) VALUES (%s)", (name,))
     DB.commit()
     DB.close()
 
@@ -70,6 +69,21 @@ def playerStandings():
         matches: the number of matches the player has played
     """
 
+    DB = connect()
+    c = DB.cursor()
+    c.execute("SELECT players.id, players.name, \
+              (SELECT count(*) FROM matches \
+               WHERE matches.winner = players.id) as wins, \
+              (SELECT count(*) FROM matches \
+               WHERE matches.winner = players.id \
+               OR matches.loser = players.id) as totalMatches \
+              FROM players \
+              ORDER BY wins DESC")
+
+    standings = c.fetchall()
+    DB.close()
+    return standings
+
 
 def reportMatch(winner, loser):
     """Records the outcome of a single match between two players.
@@ -82,7 +96,7 @@ def reportMatch(winner, loser):
     c = DB.cursor()
     winner = bleach.clean(winner)
     loser = bleach.clean(winner)
-    c.excecute("INSERT INTO matches (winner, loser) VALUES (%s, %s)", (winner, loser))
+    c.execute("INSERT INTO matches (winner, loser) VALUES (%s, %s)", (winner, loser))
     DB.commit()
     DB.close()
 
