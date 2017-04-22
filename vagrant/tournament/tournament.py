@@ -4,6 +4,7 @@
 #
 
 import psycopg2
+import bleach
 
 
 def connect():
@@ -13,15 +14,30 @@ def connect():
 
 def deleteMatches():
     """Remove all the match records from the database."""
+    DB = connect()
+    c = DB.cursor()
+    c.excecute("DELETE TABLE matches")
+    DB.commit()
+    DB.close()
 
 
 def deletePlayers():
     """Remove all the player records from the database."""
-
+    DB = connect()
+    c = DB.cursor()
+    c.excecute("DELETE TABLE players")
+    DB.commit()
+    DB.close()
 
 def countPlayers():
     """Returns the number of players currently registered."""
-
+    DB = connect()
+    c = DB.cursor()
+    c.excecute("SELECT COUNT(*) FROM players")
+    count = c.fetchone()[0]
+    print count
+    DB.close()
+    return count
 
 def registerPlayer(name):
     """Adds a player to the tournament database.
@@ -32,6 +48,12 @@ def registerPlayer(name):
     Args:
       name: the player's full name (need not be unique).
     """
+    DB = connect()
+    c = DB.cursor()
+    name = bleach.clean(name)
+    c.excecute("INSERT INTO players (name) VALUES (%s)", (name,))
+    DB.commit()
+    DB.close()
 
 
 def playerStandings():
@@ -56,8 +78,14 @@ def reportMatch(winner, loser):
       winner:  the id number of the player who won
       loser:  the id number of the player who lost
     """
- 
- 
+    DB = connect()
+    c = DB.cursor()
+    winner = bleach.clean(winner)
+    loser = bleach.clean(winner)
+    c.excecute("INSERT INTO matches (winner, loser) VALUES (%s, %s)", (winner, loser))
+    DB.commit()
+    DB.close()
+
 def swissPairings():
     """Returns a list of pairs of players for the next round of a match.
   
